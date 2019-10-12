@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# local
+.DS_Store
+.env
+*.json
+*.csv
+Pipfile.lock
+Pipfile

@@ -1,0 +1,101 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-colorschemes"></script>
+<script src="https://unpkg.com/chartjs-plugin-colorschemes"></script>
+
+<style>
+    canvas {
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+</style>
+
+<div class="center">
+    <button onclick="resetZoom()">Reset Zoom</button>
+    <button id="drag-switch" onclick="toggleDragMode()">Disable drag mode</button>
+    <canvas id="chartJS">
+</div>
+
+
+
+
+<script>
+
+    var jsonObject = JSON.parse('{{ datasets | safe }}');
+    var ejes = JSON.parse('{{ ejes | safe }}');
+
+    var ctx = document.getElementById('chartJS').getContext('2d');
+
+    // initialize data with default first
+    var chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            lineTension: 0,
+            datasets: jsonObject,
+        },
+
+        options: {
+            title: {
+                display: true,
+                text: ejes.titulo,
+            },
+            scales: {
+                xAxes: [{
+                    type: 'time',
+                    distribution: 'series',
+                    ticks: {
+                        autoSkip: true,
+                    },
+                }],
+                yAxes: [{
+                    stacked: true,
+                }]
+            },
+            elements: {
+                line: {
+                    cubicInterpolationMode: 'monotone',
+                    tension: 0,
+                },
+                
+            },
+            responsive: true,
+            plugins: {
+                colorschemes: {
+                    scheme: ejes.scheme,
+                },
+                filler: {
+                    propagate: true
+                },
+                zoom: {
+                    zoom: {
+                        enabled: true,
+                        drag: true,
+                        mode: 'x',
+                        speed: 0.05
+                    }
+                },
+            },
+        }
+    });
+
+    window.resetZoom = function() {
+        window.myLine.resetZoom();
+    };
+    
+    window.toggleDragMode = function() {
+        var chart = window.myLine;
+        var zoomOptions = chart.options.plugins.zoom.zoom;
+        zoomOptions.drag = !zoomOptions.drag;
+        chart.update();
+        document.getElementById('drag-switch').innerText = zoomOptions.drag ? 'Disable drag mode' : 'Enable drag mode';
+    };
+
+    window.onload = function() {
+        var ctx = document.getElementById('chartJS').getContext('2d');
+        window.myLine = new window.Chart(ctx, chart.config);
+    };
+
+</script>
