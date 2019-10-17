@@ -1,3 +1,8 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.js"></script>
@@ -13,80 +18,106 @@
     }
 </style>
 
-<div class="center">
-    <button onclick="resetZoom()">Reset Zoom</button>
-    <button id="drag-switch" onclick="toggleDragMode()">Disable drag mode</button>
-    <canvas id="chartJS">
+<canvas id="chartJS"></canvas>
+<div class="buttons">
+    <button class="button is-hovered is-fullwidth" onclick="resetZoom()">Reestablecer zoom</a>
+    <button class="button is-hovered is-fullwidth" onclick="toggleDragMode()">Deshabilitar/habilitar arrasatrar para acercar</a>
 </div>
-
-
-
 
 <script>
 
-    var jsonObject = JSON.parse('{{ datasets | safe }}');
-    var ejes = JSON.parse('{{ ejes | safe }}');
-
     var ctx = document.getElementById('chartJS').getContext('2d');
+    var chart;
 
-    // initialize data with default first
-    var chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            lineTension: 0,
-            datasets: jsonObject,
-        },
+    function compare( a, b ) {
+    if ( a.label < b.label ){
+        return -1;
+    }
+    if ( a.label > b.label ){
+        return 1;
+    }
+        return 0;
+    }
 
-        options: {
-            title: {
-                display: true,
-                text: ejes.titulo,
+    var info = JSON.parse('{{ info | escapejs }}');
+
+    fetch(`/api${info.url}`)
+        .then(res => res.json())
+        .then(data => jsonData = data)
+        .then((jsonData) => {
+
+        var chartData = []
+
+        jsonData.results.forEach(function(dataset){
+            console
+            dataset.forEach(function(ramo){
+                chartData.push(ramo);
+            })
+        })
+
+        chartData.sort(compare);
+        chartData[0].fill = 'origin';
+
+        Chart.platform.disableCSSInjection = true;
+
+        // initialize data with default first
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                lineTension: 0,
+                datasets: chartData,
             },
-            scales: {
-                xAxes: [{
-                    type: 'time',
-                    distribution: 'series',
-                    ticks: {
-                        autoSkip: true,
+
+            options: {
+//                title: {
+//                    display: true,
+//                    text: info.titulo,
+//                },
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        distribution: 'series',
+                        ticks: {
+                            autoSkip: true,
+                        },
+                    }],
+                    yAxes: [{
+                        stacked: true,
+                    }]
+                },
+                elements: {
+                    line: {
+                        cubicInterpolationMode: 'monotone',
+                        tension: 0,
                     },
-                }],
-                yAxes: [{
-                    stacked: true,
-                }]
-            },
-            elements: {
-                line: {
-                    cubicInterpolationMode: 'monotone',
-                    tension: 0,
+                    
                 },
-                
-            },
-            responsive: true,
-            plugins: {
-                colorschemes: {
-                    scheme: ejes.scheme,
-                },
-                filler: {
-                    propagate: true
-                },
-                zoom: {
+                responsive: true,
+                plugins: {
+                    colorschemes: {
+                        scheme: info.scheme,
+                    },
+                    filler: {
+                        propagate: true
+                    },
                     zoom: {
-                        enabled: true,
-                        drag: true,
-                        mode: 'x',
-                        speed: 0.05
-                    }
+                        zoom: {
+                            enabled: true,
+                            drag: true,
+                            mode: 'xy',
+                            speed: 0.1
+                        }
+                    },
                 },
-            },
-        }
-    });
+            }
+        });
 
     window.resetZoom = function() {
-        window.myLine.resetZoom();
+        window.chart.resetZoom();
     };
     
     window.toggleDragMode = function() {
-        var chart = window.myLine;
+        var chart = window.chart;
         var zoomOptions = chart.options.plugins.zoom.zoom;
         zoomOptions.drag = !zoomOptions.drag;
         chart.update();
@@ -95,7 +126,10 @@
 
     window.onload = function() {
         var ctx = document.getElementById('chartJS').getContext('2d');
-        window.myLine = new window.Chart(ctx, chart.config);
+        window.chart = new window.Chart(ctx, chart.config);
     };
+    });
+
 
 </script>
+{% endblock content %}

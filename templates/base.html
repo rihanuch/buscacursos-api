@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.5/css/bulma.css"/>
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <title>{% block title %}{% endblock %}</title>
+</head>
+
+
+<div class="container is-fluid">
+    <br><h2 class="title has-text-centered is-3">{{ titulo }}</h2>
+    <form action="{% url 'search_list' %}" method="get">
+        <div class="control has-icons-left">
+            <input name="search" class="input is-rounded" type="text" placeholder="Búsqueda por sigla de ramo, departamento o profesor (apellido nombre)">
+            <span class="icon is-left">
+                <i class="fas fa-search" aria-hidden="true"></i>
+            </span>
+        </div>
+    </form>
+{% block content %}
+{% endblock %}
+</div>

@@ -36,6 +36,18 @@ class Profesor(models.Model):
 
     objects = models.Manager()
 
+    def agrupa_por_seccion(self, n_seccion):
+        cupos_lista = []
+        secciones = self.secciones.filter(seccion=n_seccion)
+        for seccion in secciones:
+            cupos_lista.extend(seccion.cupos.all())
+
+        return cupos_lista
+
+    @property
+    def to_json(self):
+        return [seccion.to_json for seccion in self.secciones.all()]
+
     def __str__(self):
         return self.nombre
 
@@ -57,12 +69,8 @@ class Ramo(models.Model):
     @property
     def to_json_agregado(self):
 
-        horarios = set()
-
-        for cupo in Cupos.objects.all():
-            horarios.add(cupo.hora)
-
-        horarios = sorted(horarios)
+        horarios = [cupo['hora'] for cupo in Cupos.objects.values('hora').distinct()]
+        horarios.sort()
 
         dataset = {'label': f'{self}', 'fill': '-1', 'data': [], 'hidden': True, 'spanGaps': False}
         for horario in horarios:
@@ -77,38 +85,44 @@ class Ramo(models.Model):
     @property
     def to_json(self):
 
-        horarios = set()
+        horarios = [cupo['hora'] for cupo in Cupos.objects.values('hora').distinct()]
+        horarios.sort()
 
-        for cupo in Cupos.objects.all():
-            horarios.add(cupo.hora)
-
-        equivalentes = set(
-            [seccion.seccion for seccion in self.secciones.all()])
+        n_equivalentes = [seccion['seccion'] for seccion in self.secciones.values('seccion').distinct()]
+        n_equivalentes.sort()
 
         cupos = []
-
         for seccion in self.secciones.all():
             for cupo in seccion.cupos.all():
                 cupos.append(cupo)
 
         secciones = []
-        for num, n_seccion in enumerate(equivalentes):
-            if num == 0:
-                color = 'origin'
-            else:
-                color = '-1'
+        for n_equivalente in n_equivalentes:
             dataset = {
-                'label': f'{self.sigla}-{n_seccion}',
-                'fill': color,
-                'data': [],
+                'label': f'{self.sigla}-{n_equivalente}',
+                'fill': '-1',
+                'data': []
             }
-            for cupo in cupos:
-                if cupo.seccion.seccion == n_seccion:
-                    dataset['data'].append(cupo.to_json)
+            cupos_seccion = self.agrupa_por_seccion(n_equivalente)
+            for horario in horarios:
+                cupos_horario = filter(lambda cupo: cupo.hora == horario, cupos_seccion)
+                try:
+                    disponibles = next(cupos_horario).disponibles
+                except StopIteration:
+                    disponibles = None
+                dataset['data'].append({'x': str(horario), 'y': disponibles})
 
             secciones.append(dataset)
 
         return secciones
+
+    def agrupa_por_seccion(self, n_seccion):
+        cupos_lista = []
+        secciones = self.secciones.filter(seccion=n_seccion)
+        for seccion in secciones:
+            cupos_lista.extend(seccion.cupos.all())
+
+        return cupos_lista
 
     def __str__(self):
         return f'{self.sigla} - {self.nombre}'
@@ -139,7 +153,7 @@ class Seccion(models.Model):
             'label': str(self),
             'fill': False,
             'spanGaps': False,
-            'data': [cupo.to_json for cupo in self.cupos.all()]
+            'data': [cupo.to_json for cupo in self.cupos.all().order_by('hora')]
         }
         return dataset
 

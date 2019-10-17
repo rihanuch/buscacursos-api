@@ -52,6 +52,10 @@ class RamoSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SeccionSerializer(serializers.HyperlinkedModelSerializer):
+
+    def to_representation(self, obj):
+        return obj.to_json
+
     class Meta:
         model = Seccion
         fields = [

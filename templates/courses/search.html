@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+
+{% block content %}
+
+    {% if multiple == True %}
+            <br>
+            <div class="card">
+                <header class="card-header">
+                    <p class="card-header-title">
+                        <a href="{% url 'ramos_total' query %}">Ver disponibilidad de todos los ramos "{{ query }}"</a>
+                    </p>
+                </header>
+                {% comment %} <div class="card-content">
+                    <div class="content">
+                    </div>
+                </div> {% endcomment %}
+            </div><br>
+    {% endif %}
+
+    {% if profesores == True %}
+        <table class="table table is-fullwidth is-hoverable">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Ramos</th>
+                    <th>Disponibilidad histórica profesor</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for profesor in object_list %}
+            {% if profesor.sigla == None %}
+                <tr>
+                    <td>{{ profesor.nombre }}</td>
+                    <td>
+                        <div class="content">
+                            <ol type="1">
+                            {% for seccion in profesor.secciones.all %}
+                                <li>{{ seccion.ramo.sigla }}-{{ seccion.seccion }}: {{ seccion.ramo.nombre }} ({{ seccion.semestre }})</li>
+                            {% endfor %}
+                            </ol>
+                        </div>
+                    </td>
+                    <td><a href="{% url 'profesor_especifico' profesor.pk %}">Disponibilidad histórica de profesor</a></td>
+                </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <table class="table table is-fullwidth is-hoverable">
+        <thead>
+            <tr>
+                <th>Sigla</th>
+                <th>Nombre</th>
+                <th>Disponibilidad por sección</th>
+                <th>Disponibilidad histórica total</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for ramo in object_list %}
+            {% if ramo.sigla != None %}
+            <tr>
+                <td>{{ ramo.sigla }}</td>
+                <td>{{ ramo.nombre }}</td>
+                <td><a href="{% url 'ramo_especifico' ramo.sigla %}">Disponibilidad histórica por sección</a></td>
+                <td><a href="{% url 'ramos_total' ramo.sigla %}">Disponibilidad histórica del ramo</a></td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+        <nav class="pagination is-rounded is-centered" role="navigation" aria-label="pagination">
+            
+            {% if page_obj.has_previous %}
+                <a class="pagination-previous" href="?search={{ query }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+            {% else %}
+                <a class="pagination-previous" disabled>Anterior</a>
+            {% endif %}
+
+            <ul class="pagination-list">
+                {% for i in paginator.page_range %}
+                    {% if page_obj.number == i %}
+                        <li><a class="pagination-link is-current" aria-label="Page {{ i }}" aria-current="page">{{ i }}</a></li>
+                    {% else %}
+                        <li><a class="pagination-link" aria-label="Goto page {{ i }}" href="?search={{ query }}&page={{ i }}&">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+
+            {% if page_obj.has_next %}
+                <a class="pagination-next" href="?search={{ query }}&page={{ page_obj.next_page_number }}">Próxima</a>
+            {% else %}
+                <a class="pagination-next" disabled>Próxima</a>
+            {% endif %}
+        </nav><br>
+    {% endif %}
+
+{% endblock content %}
