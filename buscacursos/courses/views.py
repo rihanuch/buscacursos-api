@@ -179,5 +179,4 @@ class SearchList(generic.ListView):
             if isinstance(context['object_list'][0], Profesor):
                 context['profesores'] = True
             context['multiple'] = True
-            context['multiple_url'] = reverse('ramos_total', kwargs={'dpto': context['query']})
         return context
